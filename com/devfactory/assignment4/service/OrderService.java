@@ -101,43 +101,144 @@ public class OrderService {
             if (order == null) {
                 return new ResponseEntity(null, HttpStatus.NOT_FOUND);
             }
+
+            System.out.println("Creating OrderProduct instance");
+            OrderProduct orderProduct = new OrderProduct();
+            orderProduct.setOrders(order);
+            orderProduct.setProduct(product);
+            orderProduct.setSellingCost(new BigDecimal(0));
+            System.out.println("Completed creating OrderProduct instance");
+
             // make appropriate changes in inventory
             // add order-product
             // if orderProduct exists, increase quantity ordered
             // else create new
+            System.out.println("Creating OrderProductId instance");
             OrderProductId orderProductId = new OrderProductId();
+            System.out.println("Setting OrderId");
             orderProductId.setOrderId(order.getOrderId());
+            System.out.println("Setting ProductId");
             orderProductId.setProductId(product.getId());
 
-            // Get all products associated with a certain Order ID
-            Iterable<OrderProduct> orderProducts = orderProductRepo.getByOrderId(orderId);
-
-            OrderProduct existing = null;
-
-            for (OrderProduct orderProduct : orderProducts) {
-                if (orderProduct.getProductId() == productId) {
-                    existing = orderProduct;
-                    break;
-                }
-            }
+            System.out.println("Finding existing OrderProduct");
+            OrderProduct existing = orderProductRepo.findOne(orderProductId);
+            System.out.println("Completed finding existing OrderProduct");
 
             if (existing != null) {
                 // increase quantity
                 LOGGER.debug("(OrderService) [addItem] : (order_id, product_id) pair already exists. Increasing quantity");
-                existing.setQuantity(existing.getQuantity() + quantity);
+
+                System.out.println("Setting quantity");
+
+                Integer existingQuantity = existing.getQuantity();
+                Integer newQuantity = existingQuantity + quantity;
+
+                if(newQuantity < 0) newQuantity = 0;
+
+                existing.setQuantity(newQuantity);
+
+                System.out.println("Saving to OrderProductRepository");
                 orderProductRepo.save(existing);
-                return new ResponseEntity(null, HttpStatus.OK);
+                return new ResponseEntity(null, HttpStatus.CREATED);
             } else {
                 // save to repo
+
+                System.out.println("Creating new OrderProduct object - does not already exist in table.");
                 OrderProduct newOrderProduct = new OrderProduct();
+
                 newOrderProduct.setOrderId(orderId);
                 newOrderProduct.setProductId(productId);
+                quantity = ((quantity < 0) ? 0 : quantity);
                 newOrderProduct.setQuantity(quantity);
+
+                System.out.println("Saving new OrderProduct instance to repo");
                 orderProductRepo.save(newOrderProduct);
-                return new ResponseEntity(null, HttpStatus.OK);
+                return new ResponseEntity(null, HttpStatus.CREATED);
             }
         } catch(Exception e) {
             LOGGER.error(e.getMessage());
+        }
+        return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity performSubmit(String address, String customerName, Integer orderId) {
+
+        try {
+            Orders order = ordersRepo.findOne(orderId);
+
+            if (order == null) {
+                return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+            }
+
+            // Compare quantity with remaining stock
+            Iterable<OrderProduct> orderProductIterable = orderProductRepo.getByOrderId(orderId);
+
+            Boolean cancelled = false;
+
+            for (OrderProduct orderProduct : orderProductIterable) {
+                Product _product_ = orderProduct.getProduct();
+                Integer remaining = _product_.getRemaining();
+                Integer quantityOrdered = orderProduct.getQuantity();
+                if (quantityOrdered > remaining) {
+                    // cancel order
+                    cancelled = true;
+                    // change status
+                    order.setStatus("Cancelled");
+                    ordersRepo.save(order);
+                    return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            if (!cancelled) {
+                for (OrderProduct orderProduct : orderProductIterable) {
+                    Product _product_ = orderProduct.getProduct();
+                    Integer remaining = _product_.getRemaining();
+                    Integer quantityOrdered = orderProduct.getQuantity();
+                    Integer newRemaining = remaining - quantityOrdered;
+                    if (newRemaining < 0) {
+                        newRemaining = 0;
+                    }
+                    _product_.setRemaining(newRemaining);
+                    productRepo.save(_product_);
+                }
+            }
+
+            // 1. if customer name is given:
+            //        - check if customer with this name already exists. if yes, set user to this customer
+            //        - otherwise, create new customer and then assign
+            //        - update status
+
+            if (customerName != null) {
+                Customer customer = customerRepo.findUniqueByCompanyName(customerName);
+                if (customer != null) {
+                    // TODO:
+                    // addrline1 has max limit 512
+                    // if length of address > 512, split into 2
+                    // assign 2nd part to addrline2
+                    // if length > 1024, truncate address or throw an exception (latter would be better ofcourse)
+                    customer.setAddrLine1(address);
+                    order.setCustomer(customer);
+                    order.setStatus("checkout");
+                    ordersRepo.save(order);
+                } else {
+                    customer = new Customer();
+                    customer.setAddrLine1(address);
+                    order.setCustomer(customer);
+                    order.setStatus("checkout");
+                    ordersRepo.save(order);
+                }
+                return new ResponseEntity(null, HttpStatus.OK);
+            }
+
+            // 2. customer name not given
+            //        - change status to checkout
+            else {
+                order.setStatus("checkout");
+                ordersRepo.save(order);
+                return new ResponseEntity(null, HttpStatus.OK);
+            }
+        } catch(Exception e) {
+            LOGGER.debug(e.getMessage());
         }
         return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
     }

@@ -75,14 +75,34 @@ public class OrdersController {
             LOGGER.debug("HTTP/1.1 [POST] /orders/{id}/orderLineItem : product_id not passed in request body");
             return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
         }
-        if(requestBody.get("qty") == null) {
+        if(qty == null) {
             LOGGER.debug("HTTP/1.1 [POST] /orders/{id}/orderLineItem : qty not passed in request body");
             return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
         }
-        if(order == null) {
-            LOGGER.debug("HTTP/1.1 [POST] /orders/{id}/orderLineItem : order->{id} does not exist in orders");
-            return new ResponseEntity(null, HttpStatus.NOT_FOUND);
-        }
         return orderService.addItem(productId, qty, id);
+    }
+
+    // Submit an order
+    @RequestMapping(value = "/orders/{id}", method = RequestMethod.PATCH)
+    public ResponseEntity submitOrder(@PathVariable Integer id, @RequestBody Map<String, Object> requestBody) {
+
+        try {
+            String address = requestBody.get("address").toString();
+            String customerName = requestBody.get("user_name").toString();
+
+            // address compulsory
+            if (address == null) {
+                return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
+            }
+
+            Orders order = ordersRepo.findOne(id);
+            if (order == null) {
+                return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+            }
+            return orderService.performSubmit(address, customerName, id);
+        } catch(Exception e) {
+            LOGGER.debug(e.getMessage());
+        }
+        return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
     }
 }
