@@ -6,7 +6,8 @@ import datetime
 from django.db.models import *
 from django.views.decorators.csrf import csrf_exempt
 
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 from serializers import *
 
 @csrf_exempt
@@ -50,8 +51,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(deleted=0)
+    queryset = Product.objects.filter(Q(deleted=0)|Q(deleted=None)) # pass this only for GET, PUT, PATCH requests, not for DELETE
     serializer_class = ProductSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.deleted = 0
+            instance.save()
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class CategoryProductViewSet(viewsets.ModelViewSet):
     queryset = CategoryProduct.objects.all()

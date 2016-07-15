@@ -192,7 +192,7 @@ class Product(models.Model):
     code = models.CharField(max_length=20, blank=True, null=True)
     description = models.CharField(max_length=1000, blank=True, null=True)
     deleted = models.IntegerField(blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    price = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
 
 
     class Meta:
@@ -202,12 +202,32 @@ class Product(models.Model):
     def __unicode__(self):
         return self.name
 
+    @property
     def get_category_id(self):
         try:
             category_product_obj = CategoryProduct.objects.get(product__id=self.id)
             return category_product_obj.category_id
         except:
             return 0
+
+    '''
+    @property
+    def x(self, x):
+        return Category.objects.get(name=x).name
+
+    @x.setter
+    def x(self, xx):
+        # save x to category table
+        try:
+            obj = Category.objects.get(name=xx)
+        except:
+            obj = Category(name=xx)
+            obj.save()
+        self.save()
+        category_product_obj = CategoryProduct(category=obj, product=self)
+        category_product_obj.save()
+    '''
+
 
 class ProductPrice(models.Model):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)
