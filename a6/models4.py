@@ -84,12 +84,6 @@ class Category(models.Model):
         managed = False
         db_table = 'category'
 
-    def __unicode__(self):
-        return self.name
-
-    def foo(self):
-        return 42
-
 
 class CategoryProduct(models.Model):
     category = models.ForeignKey(Category, models.DO_NOTHING)
@@ -166,9 +160,6 @@ class OrderProduct2(models.Model):
         db_table = 'order_product2'
         unique_together = (('order', 'product'),)
 
-    def __unicode__(self):
-        return str(self.selling_cost) or u''
-
 
 class Orders(models.Model):
     oid = models.AutoField(primary_key=True)
@@ -182,9 +173,6 @@ class Orders(models.Model):
         managed = False
         db_table = 'orders'
 
-    def __unicode__(self):
-        return str(self.oid) or u''
-
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
@@ -194,20 +182,10 @@ class Product(models.Model):
     deleted = models.IntegerField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
 
-
     class Meta:
         managed = False
         db_table = 'product'
 
-    def __unicode__(self):
-        return self.name
-
-    def get_category_id(self):
-        try:
-            category_product_obj = CategoryProduct.objects.get(product__id=self.id)
-            return category_product_obj.category_id
-        except:
-            return 0
 
 class ProductPrice(models.Model):
     product = models.ForeignKey(Product, models.DO_NOTHING, blank=True, null=True)

@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from . import models
+from models import *
 import datetime
 # Create your views here.
 from django.db.models import *
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import viewsets
-from serializers import ProductSerializer, CategorySerializer
+from serializers import *
 
 @csrf_exempt
 def func(request):
@@ -45,10 +45,14 @@ def func(request):
                          "data": lst
                         })
 
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = models.Product.objects.all()
+    queryset = Product.objects.filter(deleted=0)
     serializer_class = ProductSerializer
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = models.Category.objects.all()
-    serializer_class = CategorySerializer
+class CategoryProductViewSet(viewsets.ModelViewSet):
+    queryset = CategoryProduct.objects.all()
+    serializer_class = CategoryProductSerializer
