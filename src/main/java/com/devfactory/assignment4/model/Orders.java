@@ -2,7 +2,6 @@ package com.devfactory.assignment4.model;
 
 import com.devfactory.assignment4.controller.ProductController;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -29,16 +29,8 @@ public class Orders {
     @Column(name="oid")
     private int orderId;
 
-    @JsonManagedReference
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid", referencedColumnName = "id")
-    public Customer customer;
-
-    @Transient
-    @JsonIgnore
     @Column(name="uid", insertable = false, updatable = false)
     private Integer customerId;
-
 
     @Column(name="amount")
     private BigDecimal amount;
@@ -55,6 +47,14 @@ public class Orders {
     @Column(name="status")
     private String status;
 
+    @OneToMany(mappedBy = "orderId", fetch = FetchType.EAGER)
+    private Set<OrderProduct> orderToProductMap;
+
+    public Set<OrderProduct> getOrderToProductMap() { return orderToProductMap; }
+
+    public void setOrderToProductMap(Set<OrderProduct> orderToProductMap) {
+        this.orderToProductMap = orderToProductMap;
+    }
 
     public int getOrderId() {
         return orderId;
@@ -104,14 +104,6 @@ public class Orders {
 
     public void setCustomerId(Integer customerId) {
         this.customerId = customerId;
-    }
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
     }
 
 }

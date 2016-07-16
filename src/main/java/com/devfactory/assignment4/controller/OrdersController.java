@@ -1,6 +1,7 @@
 package com.devfactory.assignment4.controller;
 
 import com.devfactory.assignment4.model.Orders;
+import com.devfactory.assignment4.repository.CustomerRepository;
 import com.devfactory.assignment4.repository.OrdersRepository;
 import com.devfactory.assignment4.service.OrderService;
 import org.apache.commons.lang.StringUtils;
@@ -30,10 +31,18 @@ public class OrdersController {
     @Autowired
     OrderService orderService;
 
+    @Autowired
+    CustomerRepository customerRepo;
+
     @RequestMapping("/orders")
     public ResponseEntity getOrders() {
         List<Orders> allOrders= orderService.getAllOrders();
         return new ResponseEntity(allOrders, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/health")
+    public ResponseEntity getHealth() {
+        return new ResponseEntity(null, HttpStatus.OK);
     }
 
     // Create an order
@@ -90,19 +99,34 @@ public class OrdersController {
             String address = requestBody.get("address").toString();
             String customerName = requestBody.get("user_name").toString();
 
+            LOGGER.debug("address = " + address + ", user_name = " + customerName);
+
+            LOGGER.debug("(OrdersController) [submitOrder] : In try block");
+
             // address compulsory
             if (address == null) {
+                LOGGER.debug("(OrdersController) [submitOrder] : address not present in RequestBody");
+                LOGGER.debug("(OrdersController) [submitOrder] : address not present in RequestBody");
                 return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
             }
 
             Orders order = ordersRepo.findOne(id);
             if (order == null) {
+                LOGGER.debug("(OrdersController) [submitOrder] : order not found.");
                 return new ResponseEntity(null, HttpStatus.NOT_FOUND);
             }
+
+            if(customerName == null) {
+                customerName = customerRepo.findOne(order.getCustomerId()).getCompanyName();
+            }
+
+            LOGGER.debug("(OrdersController) [submitOrder] : Performing submit.");
             return orderService.performSubmit(address, customerName, id);
         } catch(Exception e) {
             LOGGER.debug(e.getMessage());
+            LOGGER.debug(e.getMessage());
         }
+        LOGGER.debug("(OrdersController) [submitOrder] : Exiting");
         return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
     }
 }

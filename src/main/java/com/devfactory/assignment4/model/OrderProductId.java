@@ -1,5 +1,6 @@
 package com.devfactory.assignment4.model;
 
+import javax.persistence.Column;
 import java.io.Serializable;
 
 /**
@@ -8,9 +9,11 @@ import java.io.Serializable;
 
 public class OrderProductId implements Serializable {
 
+    @Column(name = "order_id")
     private Integer orderId;
-    private Integer productId;
 
+    @Column(name = "product_id")
+    private Integer productId;
 
     public OrderProductId() {
     }

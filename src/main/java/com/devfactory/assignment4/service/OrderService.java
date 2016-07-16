@@ -72,7 +72,6 @@ public class OrderService {
             Orders order = new Orders();
             order.setDate(date);
             order.setCustomerId(customer.getId());
-            order.setCustomer(customer);
             order.setStatus("Created");
             order.setAmount(new BigDecimal(0));
             ordersRepo.save(order);
@@ -102,33 +101,33 @@ public class OrderService {
                 return new ResponseEntity(null, HttpStatus.NOT_FOUND);
             }
 
-            System.out.println("Creating OrderProduct instance");
+            LOGGER.debug("Creating OrderProduct instance");
             OrderProduct orderProduct = new OrderProduct();
-            orderProduct.setOrders(order);
-            orderProduct.setProduct(product);
+            orderProduct.setOrderId(orderId);
+            orderProduct.setProductId(productId);
             orderProduct.setSellingCost(new BigDecimal(0));
-            System.out.println("Completed creating OrderProduct instance");
+            LOGGER.debug("Completed creating OrderProduct instance");
 
             // make appropriate changes in inventory
             // add order-product
             // if orderProduct exists, increase quantity ordered
             // else create new
-            System.out.println("Creating OrderProductId instance");
+            LOGGER.debug("Creating OrderProductId instance");
             OrderProductId orderProductId = new OrderProductId();
-            System.out.println("Setting OrderId");
+            LOGGER.debug("Setting OrderId");
             orderProductId.setOrderId(order.getOrderId());
-            System.out.println("Setting ProductId");
+            LOGGER.debug("Setting ProductId");
             orderProductId.setProductId(product.getId());
 
-            System.out.println("Finding existing OrderProduct");
+            LOGGER.debug("Finding existing OrderProduct");
             OrderProduct existing = orderProductRepo.findOne(orderProductId);
-            System.out.println("Completed finding existing OrderProduct");
+            LOGGER.debug("Completed finding existing OrderProduct");
 
             if (existing != null) {
                 // increase quantity
                 LOGGER.debug("(OrderService) [addItem] : (order_id, product_id) pair already exists. Increasing quantity");
 
-                System.out.println("Setting quantity");
+                LOGGER.debug("Setting quantity");
 
                 Integer existingQuantity = existing.getQuantity();
                 Integer newQuantity = existingQuantity + quantity;
@@ -137,13 +136,13 @@ public class OrderService {
 
                 existing.setQuantity(newQuantity);
 
-                System.out.println("Saving to OrderProductRepository");
+                LOGGER.debug("Saving to OrderProductRepository");
                 orderProductRepo.save(existing);
                 return new ResponseEntity(null, HttpStatus.CREATED);
             } else {
                 // save to repo
 
-                System.out.println("Creating new OrderProduct object - does not already exist in table.");
+                LOGGER.debug("Creating new OrderProduct object - does not already exist in table.");
                 OrderProduct newOrderProduct = new OrderProduct();
 
                 newOrderProduct.setOrderId(orderId);
@@ -151,7 +150,7 @@ public class OrderService {
                 quantity = ((quantity < 0) ? 0 : quantity);
                 newOrderProduct.setQuantity(quantity);
 
-                System.out.println("Saving new OrderProduct instance to repo");
+                LOGGER.debug("Saving new OrderProduct instance to repo");
                 orderProductRepo.save(newOrderProduct);
                 return new ResponseEntity(null, HttpStatus.CREATED);
             }
@@ -170,37 +169,51 @@ public class OrderService {
                 return new ResponseEntity(null, HttpStatus.NOT_FOUND);
             }
 
-            // Compare quantity with remaining stock
-            Iterable<OrderProduct> orderProductIterable = orderProductRepo.getByOrderId(orderId);
+            LOGGER.debug("(OrderService) [performSubmit] : Performing Submit.");
+            LOGGER.debug("(OrderService) [performSubmit] : Getting all products of order.");
+            LOGGER.debug("(OrderService) [performSubmit] : Completed getting all products of order.");
 
             Boolean cancelled = false;
 
-            for (OrderProduct orderProduct : orderProductIterable) {
-                Product _product_ = orderProduct.getProduct();
+            for (OrderProduct orderProduct : order.getOrderToProductMap()) {
+                Product _product_ = productRepo.findOne(orderProduct.getProductId());
+
                 Integer remaining = _product_.getRemaining();
-                Integer quantityOrdered = orderProduct.getQuantity();
-                if (quantityOrdered > remaining) {
-                    // cancel order
-                    cancelled = true;
-                    // change status
-                    order.setStatus("Cancelled");
-                    ordersRepo.save(order);
-                    return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
+
+                if(orderId == orderProduct.getOrderId()) {
+                    Integer quantityOrdered = orderProduct.getQuantity();
+                    if (quantityOrdered > remaining) {
+                        LOGGER.debug("(OrderService) [performSubmit] : Cancelling Order");
+                        // cancel order
+                        cancelled = true;
+                        // change status
+                        order.setStatus("Cancelled");
+                        ordersRepo.save(order);
+                        LOGGER.debug("(OrderService) [performSubmit] : Completed cancelling order");
+                        return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
+                    }
                 }
             }
 
             if (!cancelled) {
-                for (OrderProduct orderProduct : orderProductIterable) {
-                    Product _product_ = orderProduct.getProduct();
+                LOGGER.debug("(OrderService) [performSubmit] : Updating inventory");
+                for (OrderProduct orderProduct : order.getOrderToProductMap()) {
+                    if(orderProduct == null) {
+                        LOGGER.debug("(OrderService) [performSubmit] : orderProduct is null. Continuing.");
+                    }
+                    Product _product_ = productRepo.findOne(orderProduct.getProductId());
                     Integer remaining = _product_.getRemaining();
+                    LOGGER.debug(remaining.toString());
                     Integer quantityOrdered = orderProduct.getQuantity();
-                    Integer newRemaining = remaining - quantityOrdered;
+                    LOGGER.debug(quantityOrdered.toString());
+                    int newRemaining = remaining - quantityOrdered; // null
                     if (newRemaining < 0) {
                         newRemaining = 0;
                     }
                     _product_.setRemaining(newRemaining);
                     productRepo.save(_product_);
                 }
+                LOGGER.debug("(OrderService) [performSubmit] : Completed updating inventory");
             }
 
             // 1. if customer name is given:
@@ -209,23 +222,31 @@ public class OrderService {
             //        - update status
 
             if (customerName != null) {
+                LOGGER.debug("(OrderService) [performSubmit] : Customer Name is provided.");
                 Customer customer = customerRepo.findUniqueByCompanyName(customerName);
                 if (customer != null) {
+                    LOGGER.debug("(OrderService) [performSubmit] : Customer exists.");
                     // TODO:
                     // addrline1 has max limit 512
                     // if length of address > 512, split into 2
                     // assign 2nd part to addrline2
                     // if length > 1024, truncate address or throw an exception (latter would be better ofcourse)
                     customer.setAddrLine1(address);
-                    order.setCustomer(customer);
+
                     order.setStatus("checkout");
                     ordersRepo.save(order);
+                    LOGGER.debug("(OrderService) [performSubmit] : Completed order submit from existing customer");
                 } else {
+                    LOGGER.debug("(OrderService) [performSubmit] : New Customer ordering");
                     customer = new Customer();
+                    customer.setCompanyName(customerName);
                     customer.setAddrLine1(address);
-                    order.setCustomer(customer);
+                    customerRepo.save(customer);
+                    customer = customerRepo.findUniqueByCompanyName(customerName);
+
                     order.setStatus("checkout");
                     ordersRepo.save(order);
+                    LOGGER.debug("(OrderService) [performSubmit] : Completed order submit from new customer");
                 }
                 return new ResponseEntity(null, HttpStatus.OK);
             }
@@ -239,7 +260,10 @@ public class OrderService {
             }
         } catch(Exception e) {
             LOGGER.debug(e.getMessage());
+            LOGGER.debug("(OrderService) [performSubmit] : Exception caught.");
+            e.printStackTrace();
         }
+        LOGGER.debug("(OrderService) [performSubmit] : Returning from performSubmit.");
         return new ResponseEntity(null, HttpStatus.BAD_REQUEST);
     }
 }
