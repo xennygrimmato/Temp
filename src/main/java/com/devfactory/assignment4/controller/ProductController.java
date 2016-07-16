@@ -6,6 +6,7 @@ package com.devfactory.assignment4.controller;
 
 import com.devfactory.assignment4.model.Product;
 import com.devfactory.assignment4.repository.ProductRepository;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +81,7 @@ public class ProductController {
             return new ResponseEntity<Object>(detailObject, HttpStatus.NOT_FOUND);
         }
 
-        if(product.getCode() == null) {
+        if(StringUtils.isBlank(product.getCode())) {
             // code is a compulsory field
             // return BAD_REQUEST if it is not part of request body
             Map<String,String> detailObject = new HashMap<String,String>();
@@ -116,15 +117,15 @@ public class ProductController {
             return new ResponseEntity<Object>(detailObject, HttpStatus.NOT_FOUND);
         }
 
-        if(product.getCode() != null) {
+        if(StringUtils.isBlank(product.getCode())) {
             p.setCode(product.getCode());
         }
 
-        if(product.getName() != null) {
+        if(StringUtils.isBlank(product.getName())) {
             p.setName(product.getName());
         }
 
-        if(product.getDescription() != null) {
+        if(StringUtils.isBlank(product.getDescription())) {
             p.setDescription(product.getDescription());
         }
 

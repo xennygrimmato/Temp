@@ -40,11 +40,6 @@ public class OrdersController {
         return new ResponseEntity(allOrders, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/health")
-    public ResponseEntity getHealth() {
-        return new ResponseEntity(null, HttpStatus.OK);
-    }
-
     // Create an order
     @RequestMapping(value = "/orders", method = RequestMethod.POST)
     public ResponseEntity createOrder(@RequestBody Map<String, Object> requestBody) {

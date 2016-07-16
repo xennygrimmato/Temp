@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-
+import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -22,7 +21,7 @@ import java.util.List;
  * Created by vaibhavtulsyan on 12/07/16.
  */
 
-@Component
+@Service
 public class OrderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class.getName());
