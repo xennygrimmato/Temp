@@ -97,3 +97,91 @@ class CategoryProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryProduct
         fields = ('category_name',)
+
+class OrderSerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(source='oid', read_only=True)
+    username = serializers.CharField(max_length=100, source='uid.company_name', required=False)
+    address = serializers.CharField(max_length=512, source='uid.addr_line1', required=False)
+    status = serializers.CharField(max_length=45, required=True)
+
+    class Meta:
+        model = Orders
+        fields = ('id', 'username', 'address', 'status', )
+
+    def update(self, instance, validated_data):
+        username = validated_data['uid']['company_name'] if 'company_name' in validated_data['uid'] else None
+        address = validated_data['uid']['addr_line1'] if 'addr_line1' in validated_data['uid'] else None
+        if not self.partial:
+            #PUT
+            #pk, username, address, status
+            #with open('/Users/vaibhavtulsyan/as6/a6/tmp.txt', 'w') as f:
+            #    f.write(str(validated_data))
+
+            try:
+                # update user details
+                user = User.objects.get(company_name=username)
+                if not address:
+                    # address was not provided in the input
+                    # do nothing, do not update address
+                    user.addr_line1 = ""
+                else:
+                    user.addr_line1 = address
+            except:
+                # create new user
+                if address:
+                    user = User(company_name=username, addr_line1=address)
+                else:
+                    user = User(company_name=username, addr_line1="")
+            user.save()
+
+            status_str = validated_data['status'] if 'status' in validated_data else 'Created'
+            instance.uid = user
+            instance.status = status_str # update status
+            instance.save()
+            return instance
+
+        else:
+            #PATCH
+            # user get or create logic
+            if 'company_name' in validated_data['uid'] \
+                             and validated_data['uid']['company_name'] != ""\
+                             and validated_data['uid']['company_name'] != None:
+                username = validated_data['uid']['company_name']
+                user = User.objects.get_or_create(company_name=username)[0]
+            else:
+                username = instance.uid.company_name
+                user = User.objects.get_or_create(company_name=username)[0]
+
+            if 'addr_line1' not in validated_data['uid']:
+                # do nothing
+                pass
+            else:
+                user.addr_line1 = validated_data['uid']['addr_line1']
+                user.save()
+            instance.uid = user
+            instance.status = validated_data['status'] if 'status' in validated_data else instance.status
+            instance.save() # note, either all changes happen or none. this is transactional
+            return instance
+
+
+class OrderLineItemSerializer(serializers.ModelSerializer):
+
+    #id = serializers.IntegerField(source='id', read_only=True)
+    price = serializers.DecimalField(max_digits=15, decimal_places=5, source='selling_cost')
+    product_id = serializers.IntegerField(source='product.id')
+    order_id = serializers.IntegerField(source='order.oid', read_only=True)
+
+    class Meta:
+        model = OrderProduct2
+        fields = ('id', 'product_id', 'order_id', 'price',)
+
+class OrderSummarySerializer(serializers.ModelSerializer):
+    #id = serializers.IntegerField(source='id', read_only=True)
+    price = serializers.DecimalField(max_digits=15, decimal_places=5, source='selling_cost')
+    product_id = serializers.IntegerField(source='product.id')
+    order_id = serializers.IntegerField(source='order.oid', read_only=True)
+
+    class Meta:
+        model = OrderProduct2
+        fields = ('id', 'product_id', 'order_id', 'price',)

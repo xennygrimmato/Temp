@@ -87,8 +87,8 @@ class Category(models.Model):
     def __unicode__(self):
         return self.name
 
-    def foo(self):
-        return 42
+    def get_id(self):
+        return self.id
 
 
 class CategoryProduct(models.Model):
@@ -157,9 +157,9 @@ class Feedback(models.Model):
 class OrderProduct2(models.Model):
     order = models.ForeignKey('Orders', models.DO_NOTHING)
     product = models.ForeignKey('Product', models.DO_NOTHING)
-    buying_cost = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
-    selling_cost = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
-    quantity = models.IntegerField(blank=True, null=True)
+    buying_cost = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    selling_cost = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    quantity = models.IntegerField(blank=True, null=True, default=1)
 
     class Meta:
         managed = False
@@ -173,10 +173,11 @@ class OrderProduct2(models.Model):
 class Orders(models.Model):
     oid = models.AutoField(primary_key=True)
     uid = models.ForeignKey('User', models.DO_NOTHING, db_column='uid', blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    amount = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
     timestamp = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=45, blank=True, null=True)
     id = models.IntegerField(blank=True, null=True)
+    deleted = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -184,6 +185,39 @@ class Orders(models.Model):
 
     def __unicode__(self):
         return str(self.oid) or u''
+
+    def get_username(self):
+        if self.uid.company_name:
+            # username is not null
+            try:
+                # if user exists
+                ret = User.objects.filter(company_name=self.uid.company_name)
+                if ret:
+                    return ret.latest().company_name
+                else:
+                    try:
+                        # create user
+                        # company_name maps to username
+                        ret = User.objects.get(company_name="")
+                        return ""
+                    except:
+                        user = User(name="", company_name="", addr_line1="")
+                        user.save()
+                        return ""
+            except:
+                # if user doesnt exist
+                try:
+                    ret = User.objects.get(company_name="")
+                    return ""
+                except:
+                    user = User(name="", company_name="", addr_line1="")
+                    user.save()
+                    return ""
+        else:
+            # anonymous user
+            # assuming that address will also be null in this case
+            # if it wasnt, could have queried in users based on address and fetched user
+            return ""
 
 
 class Product(models.Model):
@@ -193,14 +227,14 @@ class Product(models.Model):
     description = models.CharField(max_length=1000, blank=True, null=True)
     deleted = models.IntegerField(blank=True, null=True)
     price = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
-
+    category = models.ManyToManyField(Category, through='CategoryProduct')
 
     class Meta:
         managed = False
         db_table = 'product'
 
     def __unicode__(self):
-        return self.name
+        return self.name + " " + self.code
 
     @property
     def get_category_id(self):
