@@ -13,7 +13,7 @@
 
     {{cart_items}}
 
-<div class="container">
+<div class="container" ng-init="sum_total=0">
     <div class="row">
         <div class="col-sm-10 col-md-10">
             <table class="table table-hover">
@@ -42,7 +42,7 @@
                         <input type="text" class="form-control" value="{{item.quantity}}">
                     </td>
                     <td class="col-sm-1 col-md-1 text-center"><strong>{{item.price}}</strong></td>
-                    <td class="col-sm-1 col-md-1 text-center"><strong>{{item.total}}</strong></td>
+                    <td class="col-sm-1 col-md-1 text-center" ng-init="$parent.sum_total = $parent.sum_total + item.total"><strong>{{item.total}}</strong></td>
                     <td class="col-sm-1 col-md-1">
                         <button type="button" class="btn btn-danger">
                             <span class="glyphicon glyphicon-remove"></span> Remove
@@ -53,7 +53,7 @@
                     <td>   </td>
                     <td>   </td>
                     <td><h3>Total</h3></td>
-                    <td class="text-right"><h3><strong>$31.53</strong></h3></td>
+                    <td class="text-right"><h3><strong>${{sum_total}}</strong></h3></td>
                 </tr>
                 <tr>
                     <td>   </td>
