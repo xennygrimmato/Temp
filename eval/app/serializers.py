@@ -9,34 +9,37 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', )
 
 class ProductSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(max_length=20, required=True)
-    description = serializers.CharField(max_length=1000, required=True)
-    price = serializers.IntegerField(required=True)
+    code = serializers.CharField(max_length=20)
+    description = serializers.CharField(max_length=1000)
+    price = serializers.IntegerField()
     #id = serializers.IntegerField()
-    category_id = serializers.IntegerField(source='get_category_id', read_only=True)
-    category = serializers.CharField(max_length=255,write_only=True, required=True)
+    category_id = serializers.IntegerField(source='get_category_id', read_only=True, required=False)
+    category = serializers.CharField(max_length=255,write_only=True, required=False)
     #category_name = serializers.CharField(max_length=255, source='category.name', read_only=True)
     class Meta:
         model = Product
         fields = ('id', 'code', 'description', 'price', 'category_id', 'category',)
 
     def create(self, validated_data):
-        code = validated_data['code']
-        description = validated_data['description']
-        price = validated_data['price']
         category = validated_data['category']
+        del validated_data['category']
 
         # create category
+        #
+        '''
         try:
             category_obj = Category.objects.filter(name=category).first()
         except:
             category_obj = Category(name=category)
             category_obj.save()
+        '''
+        category_obj,created=Category.objects.get_or_create(name=category)
         # create product
-        product_obj = Product(code=code, description=description, price=round(float(price),4), deleted=0)
+        product_obj = Product(**validated_data)
+        product_obj.deleted=0
         product_obj.save()
         # add entry to categoryproduct
-        category_product_obj = CategoryProduct.objects.get_or_create(category=category_obj, product=product_obj)
+        category_product_obj,created = CategoryProduct.objects.get_or_create(category=category_obj, product=product_obj)
         #print self.__dict__
         return product_obj
 
@@ -48,7 +51,7 @@ class ProductSerializer(serializers.ModelSerializer):
             description = validated_data['description'] if 'description' in validated_data else ''
             instance.description = description
             price = validated_data['price'] if 'price' in validated_data else '0'
-            instance.price = round(float(price),4)
+            instance.price = int(price)
             category = validated_data['category'] if 'category' in validated_data else ''
             instance.save()
             # if category doesnt exist create it
@@ -69,7 +72,7 @@ class ProductSerializer(serializers.ModelSerializer):
             # PATCH
             instance.code = validated_data['code'] if 'code' in validated_data else instance.code
             instance.description = validated_data['description'] if 'description' in validated_data else instance.description
-            instance.price = round(float(validated_data['price']),4) if 'price' in validated_data else round(float(instance.price),4)
+            instance.price = int(price) if 'price' in validated_data else round(float(instance.price),4)
             instance.save()
             try:
                 category_obj = Category.objects.get(name=category)

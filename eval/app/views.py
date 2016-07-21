@@ -12,7 +12,7 @@ from serializers import *
 from rest_framework import mixins
 from django.http import HttpResponse
 
-
+'''
 class MiddleWare(object):
     def process_response(self, request, response):
         if response is not None:
@@ -20,13 +20,14 @@ class MiddleWare(object):
                 response._container = ['{"data":'+response._container[0]+'}']
 
         return response
+'''
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(Q(deleted=0)|Q(deleted=None)) # pass this only for GET, PUT, PATCH requests, not for DELETE
+    queryset = Product.objects.filter(deleted=0) # pass this only for GET, PUT, PATCH requests, not for DELETE
     serializer_class = ProductSerializer
 
     def destroy(self, request, *args, **kwargs):
