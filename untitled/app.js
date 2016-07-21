@@ -21,9 +21,29 @@ my_app.config(function($routeProvider) {
             controller: 'viewCartController'
         })
 
+        .when('/contact', {
+            templateUrl: 'contact.html',
+            controller: 'contactController'
+        })
+
+        .when('/checkout', {
+            templateUrl: 'checkout.html',
+            controller: 'checkoutController'
+        })
+
+        .when('/summary', {
+            templateUrl: 'final_summary.html',
+            controller: 'summaryController'
+        })
+
 });
 
 my_app.controller('mainController', function($scope, $http, $cookies) {
+
+    if($cookies.getObject("prices") != null) {
+        $cookies.putObject("prices");
+    }
+
     $http.get("http://127.0.0.1:8000/api/products/").then(function(response) {
         $scope.product_data = response.data;
         console.log(response.data);
@@ -31,6 +51,7 @@ my_app.controller('mainController', function($scope, $http, $cookies) {
 
     $http.get("http://127.0.0.1:8000/api/categories/").then(function(response) {
         $scope.categories = response.data;
+
         console.log(response.data);
     });
 
@@ -46,6 +67,7 @@ my_app.controller('productController', function($scope, $routeParams, $http, $co
     $http.get("http://127.0.0.1:8000/api/products/" + $scope.product_id).then(function(response) {
         $scope.product = response.data;
         console.log(response.data);
+
     });
 
     // bind add to cart button with cookies
@@ -68,7 +90,8 @@ my_app.controller('productController', function($scope, $routeParams, $http, $co
                 console.log(data);
                 // add order_id to cart as it will be used during checkout
                 var order_id = data["id"];
-                alert("New order created! Order ID: " + order_id);
+                $cookies.put("order_id", order_id);
+                //alert("New order created! Order ID: " + order_id);
                 var cart = $cookies.getObject("cart");
                 $cookies.putObject("cart", cart);
             }).
@@ -92,17 +115,31 @@ my_app.controller('productController', function($scope, $routeParams, $http, $co
             // set quantity
             cart[product["id"]] = parseInt(qty);
         }
+
+        if(qty == undefined || parseInt(qty) <= 0) {
+            alert("Please enter a valid quantity!");
+        }
+
         if(parseInt(qty) > 1)
-            alert(qty + " items of Product " + product["id"] + " added to cart!");
+            alert(qty + " items of Product " + product["code"] + " added to cart!");
         else
-            alert(qty + " item of Product " + product["id"] + " added to cart!");
+            alert(qty + " item of Product " + product["code"] + " added to cart!");
         $cookies.putObject("cart", cart);
         console.log($cookies.getObject("cart"));
+
+
+        var cached_prices = $cookies.getObject("price");
+        if(cached_prices == null) {
+            $cookies.putObject("price", {});
+            cached_prices = {};
+        }
+        cached_prices[product["id"]] = parseFloat(parseFloat(product["price"]));
+        $cookies.putObject("price", cached_prices);
     }
 
 });
 
-my_app.controller('viewCartController', function($scope, $http, $cookies, $localStorage) {
+my_app.controller('viewCartController', function($scope, $http, $cookies) {
     $scope.cart_items = $cookies.getObject("cart");
     var cart = $scope.cart_items;
     console.log(cart);
@@ -110,18 +147,75 @@ my_app.controller('viewCartController', function($scope, $http, $cookies, $local
     var items = [];
 
     for(var key in cart) {
+        if (!cart.hasOwnProperty(key)) continue;
+        if(key == "order_id") continue;
         if(!(key == "order_id")) {
+            console.log("key = " + key);
+            console.log("qty = " + cart[key]);
             console.log("Initiated fetching products/" + key);
             $http.get("http://127.0.0.1:8000/api/products/" + key).then(function(response) {
                 var prod = response.data;
-                prod["quantity"] = parseInt(cart[key]);
-                prod["total"] = parseInt(cart[key]) * parseFloat(prod.price);
+                prod["qty"] = parseInt(cart[key]);
+                prod["total"] = parseFloat(cart[key]) * parseFloat(prod.price);
+                console.log(cart[key] + ", " + prod["total"]);
                 items.push(prod);
                 console.log(prod);
             });
         }
     }
-
+    console.log($scope.cart_items);
     $scope.cart_items = items;
+
+});
+
+my_app.controller('contactController', function($scope, $http, $cookies, $window) {
+    $scope.submit_contact_form = function() {
+        var uname = $scope.username;
+        var msg = $scope.message;
+        var url = "http://127.0.0.1:8000/api/contact/";
+        var parameters = {"uname": uname, "msg": msg};
+        $http.post(url, parameters).
+        success(function(data, status, headers, config) {
+            console.log(data);
+            alert("Thank you! We appreciate your feedback.");
+        }).
+        error(function(data, status, headers, config) {
+            alert("Thank you! We appreciate your feedback.");
+        });
+        $window.location="/untitled/index.html";
+    }
+});
+
+my_app.controller('checkoutController', function($scope, $http, $cookies, $window) {
+    $scope.perform_checkout = function() {
+        var uname = $scope.username;
+        var addr = $scope.address;
+        var order_id = $cookies.get("order_id");
+
+        $scope.cart_items = $cookies.getObject("cart");
+        var cart = $scope.cart_items;
+        console.log("cart = " + cart);
+        var order_id = $cookies.get("order_id");
+        var price_cookie = $cookies.getObject("price");
+        console.log("price_cookie = " + price_cookie);
+        console.log(price_cookie);
+
+        for(var key in cart) {
+            price_ = price_cookie[parseInt(key)];
+            //alert(price_);
+            console.log(price_);
+            url = "http://127.0.0.1:8000/api/orders/" + order_id + "/orderlineitem/";
+            parameters = {"product_id": key, "price": price_};
+            $http.post(url, JSON.stringify(parameters)).then(function (response) {
+                console.log(response);
+                // delete cookie
+                //$cookies.remove("cart");
+            });
+        }
+
+    }
+});
+
+my_app.controller('summaryController', function($scope, $http, $cookies, $window) {
 
 });
