@@ -27,6 +27,9 @@
                 <version>2.4</version>
                 <configuration>
                     <archive>
+                        <manifest>
+                            <mainClass>Checker</mainClass>
+                        </manifest>
                         <manifestEntries>
                             <Premain-Class>SimplePreMain</Premain-Class>
                         </manifestEntries>

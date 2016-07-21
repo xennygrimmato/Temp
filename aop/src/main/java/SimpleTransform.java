@@ -18,46 +18,39 @@ public class SimpleTransform implements ClassFileTransformer {
         return "System.out.println(\"" + x + "\")";
     }
     public byte[] transform(ClassLoader loader, String className, Class redefiningClass, ProtectionDomain domain, byte[] bytes) throws IllegalClassFormatException {
+        ClassPool pool = ClassPool.getDefault();
+        CtClass cl = null;
+        try {
+            cl = pool.makeClass(new java.io.ByteArrayInputStream(bytes));
+            CtMethod[] methods = cl.getDeclaredMethods();
 
-        //System.out.println(className);
+            if (cl.getName().startsWith("ttsu.game.tictactoe")) {
+                for (CtMethod method : methods) {
+                    if (method.isEmpty() == true) continue;
+                    System.out.println("Starting: " + method.getLongName());
+                    System.out.println("Method Info: " + method.getMethodInfo().toString());
 
-        if (className.contains("Test")) {
-            try {
-                ClassPool pool = ClassPool.getDefault();
-                CtClass cl = null;
-                try {
-                    cl = pool.makeClass(new java.io.ByteArrayInputStream(bytes));
-                    CtMethod[] methods = cl.getDeclaredMethods();
+                    String method_signature = method.getSignature();
 
-
-                    for (CtMethod method : methods) {
-                        if(method.isEmpty() == true) continue;
-                        System.out.println("Starting: " + method.getLongName());
-                        System.out.println("Method Info: " + method.getMethodInfo().toString());
-
-                        String method_signature = method.getSignature();
-
-                        method.insertBefore("{for (int i=0; i < $args.length; i++) {System.out.println(\"arg[\" + i + \"] = \" + $args[i]);}}");
-                        String line2 = "System.out.println(\"Parameters: " + method.getParameterTypes().toString() + " \");";
-                        String line3 = method_signature;
-                        method.insertBefore(line2);
-                        String line1 = "System.out.println(\"Returning from: " + method.getLongName() + " \");";
-                        line2 = "System.out.println(\"Return Type: " + method.getReturnType().toString() + " \");";
-                        line3 = "System.out.println(\"Return values: \" + $_);";
-                        method.insertAfter(line1 + line2 + line3);
-                    }
-                    bytes = cl.toBytecode();
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                } finally {
-                    if (cl != null) {
-                        cl.detach();
-                    }
+                    method.insertBefore("{for (int i=0; i < $args.length; i++) {System.out.println(\"arg[\" + i + \"] = \" + $args[i]);}}");
+                    String line2 = "System.out.println(\"Parameters: " + method.getParameterTypes().toString() + " \");";
+                    String line3 = method_signature;
+                    method.insertBefore(line2);
+                    String line1 = "System.out.println(\"Returning from: " + method.getLongName() + " \");";
+                    line2 = "System.out.println(\"Return Type: " + method.getReturnType().toString() + " \");";
+                    line3 = "System.out.println(\"Return values: \" + $_);";
+                    method.insertAfter(line1 + line2 + line3);
                 }
+                bytes = cl.toBytecode();
+
                 System.out.println("Completed for Class: " + className);
                 return bytes;
-            } catch (Throwable t) {
-                t.printStackTrace();
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        } finally {
+            if(cl != null) {
+
             }
         }
         return null;
