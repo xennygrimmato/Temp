@@ -76,9 +76,9 @@ class ProductSerializer(serializers.ModelSerializer):
             cat_name = validated_data['category'] if 'category' in validated_data else ''
             instance.save()
             try:
-                category_obj = Category.objects.get(name=category)
+                category_obj = Category.objects.get(name=cat_name)
             except:
-                category_obj = Category(name=validated_data['category'], description="")
+                category_obj = Category(name=cat_name, description="")
                 category_obj.save()
             # save (category, product)
             try:
