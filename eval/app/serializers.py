@@ -43,6 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
         #print self.__dict__
         return product_obj
 
+    '''
     def update(self, instance, validated_data):
         if 'category' in validated_data:
             cat, created = Category.objects.get_or_create(name=validated_data['category'])
@@ -65,7 +66,7 @@ class ProductSerializer(serializers.ModelSerializer):
             instance.description = description
             price = validated_data['price'] if 'price' in validated_data else '0'
             instance.price = int(price)
-            category = validated_data['category'] if 'category' in validated_data else ''
+            category = validated_data['category'] if 'category' in validated_data else 'aa'
             instance.save()
             # if category doesnt exist create it
             try:
@@ -87,7 +88,7 @@ class ProductSerializer(serializers.ModelSerializer):
             instance.code = validated_data['code'] if 'code' in validated_data else instance.code
             instance.description = validated_data['description'] if 'description' in validated_data else instance.description
             instance.price = int(price) if 'price' in validated_data else int(instance.price)
-            cat_name = validated_data['category'] if 'category' in validated_data else ''
+            cat_name = validated_data['category'] if 'category' in validated_data else 'aa'
             instance.save()
             try:
                 category_obj = Category.objects.get(name=cat_name)
@@ -101,7 +102,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 category_product_obj = CategoryProduct(category=category_obj, product=instance)
                 category_product_obj.save()
             return instance
-        '''
+
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
