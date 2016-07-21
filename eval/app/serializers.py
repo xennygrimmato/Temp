@@ -44,6 +44,19 @@ class ProductSerializer(serializers.ModelSerializer):
         return product_obj
 
     def update(self, instance, validated_data):
+        if 'category' in validated_data:
+            cat, created = Category.objects.get_or_create(name=validated_data['category'])
+            proCat = CategoryProduct.objects.get(product_id = instance.id)
+            proCat.category_id = cat.id
+            proCat.save()
+            del validated_data['category']
+        for key in validated_data:
+            setattr(instance, key, validated_data[key])
+        instance.save()
+        return instance
+    '''
+    def update(self, instance, validated_data):
+
         if not self.partial:
             # PUT
             code = validated_data['code'] if 'code' in validated_data else ''
@@ -61,7 +74,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 category_obj = Category(name=category, description="")
                 category_obj.save()
             # assign that category id to that product id
-            
+
             try:
                 category_product_obj = CategoryProduct.objects.get(category=category_obj, product=instance)
             except:
@@ -88,6 +101,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 category_product_obj = CategoryProduct(category=category_obj, product=instance)
                 category_product_obj.save()
             return instance
+        '''
 
 
 class CategoryProductSerializer(serializers.ModelSerializer):
