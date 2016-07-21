@@ -9,12 +9,12 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', )
 
 class ProductSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(max_length=20)
+    code = serializers.CharField(max_length=200)
     description = serializers.CharField(max_length=1000)
     price = serializers.IntegerField()
     #id = serializers.IntegerField()
     category_id = serializers.IntegerField(source='get_category_id', read_only=True, required=False)
-    category = serializers.CharField(max_length=255,write_only=True, required=False)
+    category = serializers.CharField(max_length=1000,write_only=True, required=False)
     #category_name = serializers.CharField(max_length=255, source='category.name', read_only=True)
     class Meta:
         model = Product
@@ -72,7 +72,8 @@ class ProductSerializer(serializers.ModelSerializer):
             # PATCH
             instance.code = validated_data['code'] if 'code' in validated_data else instance.code
             instance.description = validated_data['description'] if 'description' in validated_data else instance.description
-            instance.price = int(price) if 'price' in validated_data else round(float(instance.price),4)
+            instance.price = int(price) if 'price' in validated_data else int(instance.price)
+            cat_name = validated_data['category'] if 'category' in validated_data else ''
             instance.save()
             try:
                 category_obj = Category.objects.get(name=category)
