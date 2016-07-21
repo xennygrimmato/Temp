@@ -9,9 +9,9 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', )
 
 class ProductSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(max_length=200)
-    description = serializers.CharField(max_length=1000)
-    price = serializers.IntegerField()
+    code = serializers.CharField(max_length=1000, required=False)
+    description = serializers.CharField(max_length=1000, required=False)
+    price = serializers.IntegerField(required=False)
     #id = serializers.IntegerField()
     category_id = serializers.IntegerField(source='get_category_id', read_only=True, required=False)
     category = serializers.CharField(max_length=1000,write_only=True, required=False)
@@ -61,6 +61,7 @@ class ProductSerializer(serializers.ModelSerializer):
                 category_obj = Category(name=category, description="")
                 category_obj.save()
             # assign that category id to that product id
+            
             try:
                 category_product_obj = CategoryProduct.objects.get(category=category_obj, product=instance)
             except:
