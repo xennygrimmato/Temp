@@ -1,83 +1,57 @@
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.BytecodeScanningDetector;
+import edu.umd.cs.findbugs.classfile.ClassDescriptor;
+import edu.umd.cs.findbugs.classfile.DescriptorFactory;
 import edu.umd.cs.findbugs.classfile.MethodDescriptor;
-import org.apache.bcel.classfile.*;
 
-public abstract class RunDetector extends BytecodeScanningDetector {
-
-// ------------------------------ FIELDS ------------------------------
+public class RunDetector extends BytecodeScanningDetector {
 
     protected BugReporter bugReporter;
-
     protected boolean entity;
 
-// --------------------------- CONSTRUCTORS ---------------------------
+
+    DescriptorFactory df;
+    private static final ClassDescriptor THREAD_CLASS = DescriptorFactory.createClassDescriptor(Thread.class);
+    private static final ClassDescriptor RUNNABLE_CLASS = DescriptorFactory.createClassDescriptor(Runnable.class);
+    private String RUN_STR = "run";
+
 
     public RunDetector(BugReporter bugReporter)
     {
         this.bugReporter = bugReporter;
     }
 
-// -------------------------- OTHER METHODS --------------------------
-
     @Override
-    public void visit(JavaClass obj)
-    {
+    public void sawMethod() {
+        MethodDescriptor invokedMethod = getMethodDescriptorOperand();
+        ClassDescriptor invokedObject = getClassDescriptorOperand();
 
-        String superclassname = obj.getSuperclassName();
-        String classname = obj.getClassName();
-        Method[] methods = obj.getMethods();
-        for(Method method : methods) {
-            String methodname = method.getName();
-            if(classname == "Thread" && methodname == "run") {
-                bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, method.getSignature(), method.isStatic())));
-            } else if(classname == "Runnable" && methodname == "run") {
-                bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, method.getSignature(), method.isStatic())));
-            } else if(superclassname == "Thread" && methodname == "run") {
-                bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, method.getSignature(), method.isStatic())));
-            } else if(superclassname == "Runnable" && methodname == "run") {
-                bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, method.getSignature(), method.isStatic())));
+        try {
+            ClassDescriptor curClass = invokedObject.getXClass().getClassDescriptor();
+            ClassDescriptor curSuper = invokedObject.getXClass().getSuperclassDescriptor();
+            String methodname = invokedMethod.getName();
+
+            if ((curClass.equals(THREAD_CLASS) && methodname.equals(RUN_STR)) ||
+                    (curClass.equals(RUNNABLE_CLASS) && methodname.equals(RUN_STR))) {
+                bugReporter.reportBug(
+                        new BugInstance(this, "RUN_INCONSISTENCY", HIGH_PRIORITY)
+                                .addClassAndMethod(this).addSourceLine(this));
             }
-        }
 
-        super.visit(obj);
-    }
+            ClassDescriptor[] interfaceList = invokedObject.getXClass().getInterfaceDescriptorList();
+            for(ClassDescriptor descriptor : interfaceList) {
+                if((descriptor.equals(THREAD_CLASS) || descriptor.equals(RUNNABLE_CLASS)) &&
+                        (methodname.equals(RUN_STR))) {
+                    bugReporter.reportBug(
+                            new BugInstance(this, "RUN_INCONSISTENCY", HIGH_PRIORITY)
+                                    .addClassAndMethod(this).addSourceLine(this));
+                }
+            }
 
-    @Override
-    public void visit(Field obj)
-    {
-        if (!entity) {
-            return;
-        }
-        if (isInvalid(obj)) {
-            bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addClass(this).addField(this));
-        }
-    }
 
-    @Override
-    public void visit(Method obj)
-    {
-        if (!entity) {
-            return;
-        }
-        //if (isInvalid(obj)) {
-        //    bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addClass(this).addMethod(this));
-        //}
-
-        String superclassname = obj.getClass().getSuperclass().getName();
-        String classname = obj.getClass().getName();
-        String methodname = obj.getName();
-        if(classname == "Thread" && methodname == "run") {
-            bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, obj.getSignature(), obj.isStatic())));
-        } else if(classname == "Runnable" && methodname == "run") {
-            bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, obj.getSignature(), obj.isStatic())));
-        } else if(superclassname == "Thread" && methodname == "run") {
-            bugReporter.reportBug(new BugInstance(this, getBugType(), HIGH_PRIORITY).addMethod(new MethodDescriptor(classname, methodname, obj.getSignature(), obj.isStatic())));
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
-
-    protected abstract String getBugType();
-
-    protected abstract boolean isInvalid(FieldOrMethod obj);
 }

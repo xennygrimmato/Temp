@@ -1,7 +1,7 @@
 <FindbugsPlugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="findbugsplugin.xsd"
-                pluginid="pl.com.it_crowd.findbugs.NotNullInconsistency" provider="IT Crowd" website="http://itcrowd.pl/itcrowd-findbugs">
+                pluginid="Run_Inconsistency" provider="vtulsyan" website="http://codenation.co.in">
 
-    <Detector class="RunDetector" reports="NOT_NULL_INCONSISTENCY"/>
+    <Detector class="RunDetector" reports="RUN_INCONSISTENCY"/>
     <BugPattern type="RUN_INCONSISTENCY" abbrev="RI" category="CORRECTNESS"/>
 
 </FindbugsPlugin>
