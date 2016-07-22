@@ -1,0 +1,23 @@
+<div class="container">
+    <div class="col-md-3">
+        <p class="lead">Categories</p>
+        <div class="list-group" ng-repeat="category in categories">
+            <a href="#/" class="list-group-item" ng-click="filter_by_category(category.id)">{{category.name}}</a>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="row carousel-holder"></div>
+        <div class="col-sm-4 col-lg-4 col-md-4" ng-repeat="product in product_data | filter:filter_category">
+            <div class="thumbnail">
+                <img src="img/img{{product.id % 3}}.jpg" alt="">
+                <div class="well">
+                    <h4 align="center">
+                        <a href="#/product{{product.id}}">{{product.code}}</a>
+                    </h4>
+                    <h4 align="center">${{product.price}}</h4><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#/product{{product.id}}" class="btn btn-default" role="button"><span style="text-align:center">Show Details</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

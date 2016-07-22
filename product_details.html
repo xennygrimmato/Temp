@@ -1,0 +1,30 @@
+<div class="container" ng-controller="productController">
+    <div class="row">
+        <div class="col-md-3">
+            <p class="lead">Categories</p>
+            <div class="list-group" ng-repeat="category in categories">
+                <a href="#/" class="list-group-item" ng-click="filter_by_category(category.id)">{{category.name}}</a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="row carousel-holder"></div>
+            <div class="col-sm-8 col-lg-8 col-md-8">
+                <div class="thumbnail">
+                    <img src="img/img{{product.id % 3}}.jpg" alt="">
+                    <div class="well well-lg">
+                        <h4 align="center">${{product.price}}</h4><br>
+                        <h4 align="center"><a href="#">{{product.code}}</a></h4>
+                        <br>
+                        <p>{{product.description}}</p>
+                        <div class="form-inline">
+                            <input type="text" class="form control" placeholder="Quantity" ng-model="qty"/><br/><br/>
+                            <button type="submit" class="btn btn-success" ng-click="add_product_to_cart(qty)">
+                                Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

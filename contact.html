@@ -1,0 +1,33 @@
+<div>
+    <div class="container" ng-controller="contactController">
+        <div class="row">
+            <!--
+            <div class="col-md-12">
+                <small><i></i>Add alerts if form ok... success, else error.</i></small>
+                <div class="alert alert-success"><strong><span class="glyphicon glyphicon-send"></span> Success! Message sent. (If form ok!)</strong></div>
+                <div class="alert alert-danger"><span class="glyphicon glyphicon-alert"></span><strong> Error! Please check the inputs. (If form error!)</strong></div>
+            </div>
+            -->
+            <form role="form" action="" method="post" >
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label for="InputName">Email Address</label>
+                        <div class="input-group">
+                            <input ng-model="username" type="text" class="form-control" name="InputName" id="InputName" placeholder="Enter email-address" required>
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-ok form-control-feedback"></i></span></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="InputMessage">Message</label>
+                        <div class="input-group">
+                            <textarea ng-model="message" name="InputMessage" id="InputMessage" class="form-control" rows="5" required></textarea>
+                            <span class="input-group-addon"><i class="glyphicon glyphicon-ok form-control-feedback"></i></span></div>
+                    </div>
+                    <button class="btn btn-info pull-right" ng-click="submit_contact_form()">Submit</button>
+                </div>
+            </form>
+            <hr class="featurette-divider hidden-lg">
+        </div>
+
+    </div>
+
+</div>
