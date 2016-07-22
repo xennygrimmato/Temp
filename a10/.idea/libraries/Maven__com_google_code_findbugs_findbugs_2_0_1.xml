@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Maven: com.google.code.findbugs:findbugs:2.0.1">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/findbugs/2.0.1/findbugs-2.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/findbugs/2.0.1/findbugs-2.0.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/findbugs/2.0.1/findbugs-2.0.1-sources.jar!/" />
+      <root url="jar://$APPLICATION_PLUGINS_DIR$/FindBugs-IDEA-1.0.0/customPlugins/fb-contrib-6.6.1.jar!/" />
+      <root url="file://$USER_HOME$/Downloads/findbugs-3.0.1" />
+    </SOURCES>
+  </library>
+</component>

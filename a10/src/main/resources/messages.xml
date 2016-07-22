@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="messagecollection.xsd">
+
+    <Plugin>
+        <ShortDescription>FindBugs Plugin for Thread.run()</ShortDescription>
+        <Details>run() method for Runnable and Thread</Details>
+    </Plugin>
+
+    <Detector class="RunDetector">
+        <Details>
+            NotNullInconsistency
+        </Details>
+    </Detector>
+
+    <BugPattern type="RUN_INCONSISTENCY">
+        <ShortDescription>run() inconsistency</ShortDescription>
+        <LongDescription>Thread and Runnable must not call run() directly</LongDescription>
+        <Details>
+            Thread and Runnable must not call run() directly
+        </Details>
+    </BugPattern>
+
+    <BugCode abbrev="RI">Run Inconsistency</BugCode>
+</MessageCollection>
